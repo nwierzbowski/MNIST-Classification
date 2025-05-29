@@ -1,0 +1,1 @@
+PATH = "weights.pth" # .pth or .pt are common extensions

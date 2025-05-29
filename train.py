@@ -4,6 +4,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 
 # Import my CNN model
+from constants import PATH
 from model import CNN
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -66,8 +67,6 @@ with torch.no_grad():  # Disable gradient tracking for evaluation
         total += labels.size(0)
 
 print(f"Accuracy: {correct / total * 100:.2f}%")
-
-PATH = "weights.pth" # .pth or .pt are common extensions
 
 # Save only the model's learned parameters
 torch.save(model.state_dict(), PATH)
