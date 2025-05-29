@@ -6,6 +6,12 @@ from torchvision import datasets, transforms
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
+# torch.manual_seed(42)
+# torch.cuda.manual_seed(42)
+# torch.backends.cudnn.deterministic = True
+# torch.backends.cudnn.benchmark = False
+
+
 # Define a transform to convert images to tensors
 transform = transforms.ToTensor()
 
@@ -27,23 +33,40 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=128, shuffle=
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1)
-        self.bn1 = nn.BatchNorm2d(16)
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1)
+        self.bn1 = nn.BatchNorm2d(32)
+        self.conv2 = nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1)
         self.bn2 = nn.BatchNorm2d(32)
         self.conv3 = nn.Conv2d(32, 32, kernel_size=5, stride=2, padding=1)
         self.bn3 = nn.BatchNorm2d(32)
-        self.fc1 = nn.Linear(32 * 13 * 13, 128)
-        self.fc2 = nn.Linear(128, 10)  # Output layer (10 classes)
-        self.relu = nn.ReLU()  # Activation function
+
+        self.conv4 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+        self.bn4 = nn.BatchNorm2d(64)
+        self.conv5 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
+        self.bn5 = nn.BatchNorm2d(64)
+        self.conv6 = nn.Conv2d(64, 64, kernel_size=5, stride=2, padding=1)
+        self.bn6 = nn.BatchNorm2d(64)
+
+        self.conv7 = nn.Conv2d(64, 128, kernel_size=4, stride=1, padding=1)
+        self.bn7 = nn.BatchNorm2d(128)
+
+        self.fc1 = nn.Linear(128 * 5 * 5, 10)
+        self.relu = nn.ReLU()
 
     def forward(self, x):
         x = self.relu(self.bn1(self.conv1(x)))  # Apply first convolution and ReLU
         x = self.relu(self.bn2(self.conv2(x)))
         x = self.relu(self.bn3(self.conv3(x)))
+
+        x = self.relu(self.bn4(self.conv4(x)))  # Apply second convolution and ReLU
+        x = self.relu(self.bn5(self.conv5(x)))
+        x = self.relu(self.bn6(self.conv6(x)))
+
+        x = self.relu(self.bn7(self.conv7(x)))  # Apply third convolution and ReLU
+        
         x = x.view(x.size(0), -1)
-        x = self.relu(self.fc1(x))  # Fully connected layer with ReLU
-        x = self.fc2(x)  # No activation here (logits for classification)
+        x = torch.log_softmax(self.fc1(x), dim=1)
+
         return x
 
 
@@ -77,3 +100,10 @@ with torch.no_grad():  # Disable gradient tracking for evaluation
         total += labels.size(0)
 
 print(f"Accuracy: {correct / total * 100:.2f}%")
+
+PATH = "weights.pth" # .pth or .pt are common extensions
+
+# Save only the model's learned parameters
+torch.save(model.state_dict(), PATH)
+
+print(f"Model weights saved to {PATH}")
